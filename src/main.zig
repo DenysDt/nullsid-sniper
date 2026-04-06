@@ -1,10 +1,17 @@
 const std = @import("std");
+const builtin = @import("builtin");
+const cl = @import("colours.zig");
 
 const print = std.debug.print;
 
 //createStr template: https://profiles.dnull.xyz/update?handle=
 //                    handle
 //                    &image_ref=60bd3bc7-c9cb-433e-90a9-6e4e44c4a846
+
+
+const Colour = cl.Colour;
+
+
 
 fn changeID(url: []const u8, bearer: []const u8, client: *std.http.Client) std.http.Status {
     const uri = std.Uri.parse(url) catch {
@@ -28,19 +35,19 @@ fn soCalledWhileLoop(url: []const u8, handle: []const u8, bearer: []const u8, io
         const res = changeID(url, bearer, &client);
         switch (res) {
             .ok => {
-                print("\nSniped ({s})!\n", .{handle});
+                print("\n{s}Sniped ({s})!{s}\n", .{Colour.b_green, handle, Colour.reset});
                 break :sniper;
             },
             .teapot => {
                 switch (state) {
-                    1 => {print("\rSniping.   ({s})", .{handle}); state += 1;},
-                    2 => {print("\rSniping..  ({s})", .{handle}); state += 1;},
-                    3 => {print("\rSniping... ({s})", .{handle}); state += 1;},
-                    4 => {print("\rSniping....({s})", .{handle}); state = 1;}, else => {}
+                    1 => {print("\rSniping.{s}   ({s}){s}", .{Colour.magenta, handle, Colour.reset}); state += 1;},
+                    2 => {print("\rSniping..{s}  ({s}){s}", .{Colour.cyan, handle, Colour.reset}); state += 1;},
+                    3 => {print("\rSniping...{s} ({s}){s}", .{Colour.yellow, handle, Colour.reset}); state += 1;},
+                    4 => {print("\rSniping....{s}({s}){s}", .{Colour.green, handle, Colour.reset}); state = 1;}, else => {}
                 }
             },
             else => {
-                print("API returned something... completely weird?? (status: {d})\n", .{res});
+                print("{s}API returned something... completely weird?? (status: {d}){s}\n", .{Colour.b_red, res, Colour.reset});
                 break :sniper;
             },
         }
@@ -52,6 +59,14 @@ fn soCalledWhileLoop(url: []const u8, handle: []const u8, bearer: []const u8, io
 }
 
 pub fn main(init: std.process.Init) !void {
+    if (builtin.os.tag == .windows){
+        print("Windows user detected!!! Output may not work as expected...\n", .{Colour.b_red, Colour.bold, Colour.reset});
+    }
+    if (builtin.mode != .ReleaseFast){
+        print("{s}{s}WARNING, I would prefer if you used --release=fast mode in your build command as it helps code run quicker!!{s}\n", .{Colour.b_yellow, Colour.bold, Colour.reset});
+    }
+    
+
     const alloc = init.gpa;
     const io = init.io;
 
@@ -81,7 +96,7 @@ pub fn main(init: std.process.Init) !void {
         const thr = try std.Thread.spawn(.{}, soCalledWhileLoop, .{ url, handle, bearer, &io, alloc });
         defer thr.join();
 
-        print("Started the loop...\n", .{});
+        print("{s}Started the loop...{s}\n", .{Colour.cyan, Colour.reset});
     }
 
     //std.debug.print("status={d}\n", .{res});
